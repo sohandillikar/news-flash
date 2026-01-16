@@ -6,7 +6,7 @@ export class NewsService {
     private static readonly newsApiUrl = 'https://newsapi.org/v2';
 
     @DaemoFunction({
-        description: "Search through millions of news articles and return the most relevant ones",
+        description: "Search through millions of news articles and return the most relevant ones. IMPORTANT: Some results may be irrelevant to the user's query, so you must filter out irrelevant results.",
         inputSchema: z.object({
             q: z.array(z.string()).describe("Keywords or phrases to search for in the article title and body"),
             searchIn: z.array(z.enum(["title", "description", "content"])).default(["title", "description", "content"]).describe("Fields to search in"),
@@ -19,7 +19,17 @@ export class NewsService {
             ]).default("publishedAt").describe("The order to sort the articles in"),
             results: z.number().min(1).max(100).default(10).describe("The number of news results to return"),
         }),
-        outputSchema: z.object({})
+        outputSchema: z.object({
+            articles: z.array(z.object({
+                author: z.string().describe("The author of the article"),
+                title: z.string().describe("The title of the article"),
+                description: z.string().describe("A brief description of the article"),
+                url: z.string().describe("The URL of the article"),
+                source: z.string().describe("The source of the article"),
+                publishedAt: z.string().describe("The date and time the article was published"),
+                content: z.string().describe("The first few sentences of the article"),
+            }))
+        })
     })
     async searchNews(args: { q: string[], searchIn: string[], from: string, to: string, sortBy: string, results: number }) {
         const { q, searchIn, from, to, sortBy, results } = args;
@@ -50,9 +60,9 @@ export class NewsService {
             publishedAt: article.publishedAt,
             content: article.content,
         }));
-        /*console.log(articles);
-        console.log(args);
-        console.log(articles.length);*/
+        console.log(articles);
+        console.log(`Recieved request for ${results} articles`);
+        console.log(`Returning ${articles.length} articles`);
         return {articles};
     }
 
